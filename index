@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoshuaTREE Broker Wiki</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.9/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .highlight {
+            background-color: #fefcbf;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .collapsible-header {
+            transition: background-color 0.3s ease;
+        }
+        .collapsible-header:hover {
+            background-color: #e5e7eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        td {
+            background-color: #ffffff;
+        }
+        .break-words {
+            word-break: break-word;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        .transition-max-height {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .dark .container {
+            background-color: #1f2937;
+        }
+        .dark th {
+            background-color: #374151;
+            color: #f3f4f6;
+        }
+        .dark td {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .dark .collapsible-header {
+            background-color: #374151;
+            color: #f3f4f6;
+        }
+        .dark .collapsible-header:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body className="bg-gradient-to-r from-blue-50 to-indigo-50 font-sans dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function CollapsibleSection({ title, children }) {
+            const [isOpen, setIsOpen] = React.useState(false);
+
+            return (
+                <div className="mb-4">
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="w-full text-left p-4 bg-white rounded-lg shadow-md collapsible-header flex justify-between items-center text-lg font-semibold text-gray-700 hover:text-indigo-600 transition-colors duration-200 dark:bg-gray-800 dark:text-gray-200"
+                    >
+                        {title}
+                        <svg
+                            className={`w-6 h-6 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div
+                        className={`mt-2 p-4 bg-gray-50 rounded-lg shadow-inner overflow-hidden transition-max-height ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                    >
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        function LenderEditModal({ lender, onSave, onCancel }) {
+            const [name, setName] = React.useState(lender ? lender.name : '');
+            const [score, setScore] = React.useState(lender ? lender.score : '');
+            const [seesRHI, setSeesRHI] = React.useState(lender ? lender.seesRHI : 'No');
+            const [eot, setEot] = React.useState(lender ? lender.eot || '' : '');
+            const [acceptableVisas, setAcceptableVisas] = React.useState(lender ? lender.acceptableVisas || '' : '');
+
+            const handleSave = () => {
+                onSave({ name, score, seesRHI, eot, acceptableVisas });
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md dark:bg-gray-800">
+                        <h3 className="text-lg font-semibold text-indigo-700 mb-4 dark:text-indigo-300">{lender ? 'Edit Lender' : 'Add Lender'}</h3>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Name</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                readOnly={!!lender}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Score</label>
+                            <input
+                                type="text"
+                                value={score}
+                                onChange={(e) => setScore(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Sees RHI</label>
+                            <select
+                                value={seesRHI}
+                                onChange={(e) => setSeesRHI(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            >
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">EOT</label>
+                            <input
+                                type="text"
+                                value={eot}
+                                onChange={(e) => setEot(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Acceptable Visas</label>
+                            <textarea
+                                value={acceptableVisas}
+                                onChange={(e) => setAcceptableVisas(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                rows="4"
+                                placeholder="Enter acceptable visas..."
+                            ></textarea>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={onCancel}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200 dark:bg-gray-600 dark:text-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 dark:bg-indigo-500"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function NoteModal({ lender, noteIndex, onSave, onCancel }) {
+            const [noteText, setNoteText] = React.useState(noteIndex !== null ? lender.notes[noteIndex].text : '');
+
+            const handleSave = () => {
+                if (noteText.trim()) {
+                    const updatedNotes = noteIndex !== null
+                        ? lender.notes.map((note, i) => i === noteIndex ? { ...note, text: noteText } : note)
+                        : [...lender.notes, { text: noteText, timestamp: new Date().toLocaleString() }];
+                    onSave(updatedNotes);
+                } else {
+                    alert('Please enter a note.');
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md dark:bg-gray-800">
+                        <h3 className="text-lg font-semibold text-indigo-700 mb-4 dark:text-indigo-300">{noteIndex !== null ? 'Edit Note' : 'Add Note'} for {lender.name}</h3>
+                        <textarea
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            rows="4"
+                            placeholder="Enter your note here..."
+                        ></textarea>
+                        <div className="flex justify-end space-x-2 mt-4">
+                            <button
+                                onClick={onCancel}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200 dark:bg-gray-600 dark:text-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 dark:bg-indigo-500"
+                            >
+                                {noteIndex !== null ? 'Update Note' : 'Save Note'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function YTDCalculator() {
+            const [employmentType, setEmploymentType] = React.useState('Full-time');
+            const [startDate, setStartDate] = React.useState('2024-07-01');
+            const [payDate, setPayDate] = React.useState('2025-05-30');
+            const [incomeAmount, setIncomeAmount] = React.useState('30363.13');
+            const [payFrequency, setPayFrequency] = React.useState('Fortnightly');
+            const [preTaxDeductions, setPreTaxDeductions] = React.useState('0');
+            const [postTaxDeductions, setPostTaxDeductions] = React.useState('0');
+            const [result, setResult] = React.useState(null);
+
+            const calculateTax = (income) => {
+                if (income <= 18200) return 0;
+                else if (income <= 45000) return (income - 18200) * 0.19;
+                else if (income <= 120000) return (45000 - 18200) * 0.19 + (income - 45000) * 0.325;
+                else if (income <= 180000) return (45000 - 18200) * 0.19 + (120000 - 45000) * 0.325 + (income - 120000) * 0.37;
+                else return (45000 - 18200) * 0.19 + (120000 - 45000) * 0.325 + (180000 - 120000) * 0.37 + (income - 180000) * 0.45;
+            };
+
+            const calculateYTD = () => {
+                const start = new Date(startDate);
+                const end = new Date(payDate);
+                if (start >= end) {
+                    alert('Pay date must be after start date.');
+                    return;
+                }
+                const diffTime = end - start;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let periodsPerYear;
+                switch (payFrequency) {
+                    case 'Weekly': periodsPerYear = 52; break;
+                    case 'Fortnightly': periodsPerYear = 26; break;
+                    case 'Monthly': periodsPerYear = 12; break;
+                    default: periodsPerYear = 26;
+                }
+
+                const daysPerPeriod = 365 / periodsPerYear;
+                const numPeriods = Math.floor(diffDays / daysPerPeriod);
+
+                const income = parseFloat(incomeAmount) || 0;
+                const preTax = parseFloat(preTaxDeductions) || 0;
+                const postTax = parseFloat(postTaxDeductions) || 0;
+
+                const payPerPeriod = income / numPeriods;
+                const annualizedGrossIncome = payPerPeriod * periodsPerYear;
+                const taxableIncome = annualizedGrossIncome - preTax;
+                const estimatedAnnualTax = calculateTax(taxableIncome);
+                const netAfterTax = taxableIncome - estimatedAnnualTax;
+                const netAfterDeductions = netAfterTax - postTax;
+                const monthlyNet = netAfterDeductions / 12;
+
+                setResult({
+                    numPeriods,
+                    payPerPeriod: payPerPeriod.toFixed(2),
+                    annualizedGrossIncome: annualizedGrossIncome.toFixed(2),
+                    estimatedAnnualTax: estimatedAnnualTax.toFixed(2),
+                    netAfterTax: netAfterTax.toFixed(2),
+                    netAfterDeductions: netAfterDeductions.toFixed(2),
+                    monthlyNet: monthlyNet.toFixed(2)
+                });
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Employment Type</label>
+                            <select
+                                value={employmentType}
+                                onChange={(e) => setEmploymentType(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            >
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Casual">Casual</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Pay Frequency</label>
+                            <select
+                                value={payFrequency}
+                                onChange={(e) => setPayFrequency(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            >
+                                <option value="Weekly">Weekly</option>
+                                <option value="Fortnightly">Fortnightly</option>
+                                <option value="Monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Start Date</label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Pay Date</label>
+                            <input
+                                type="date"
+                                value={payDate}
+                                onChange={(e) => setPayDate(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">YTD Gross Income Amount ($)</label>
+                            <input
+                                type="number"
+                                value={incomeAmount}
+                                onChange={(e) => setIncomeAmount(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                step="0.01"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Annual Pre-Tax Deductions ($)</label>
+                            <input
+                                type="number"
+                                value={preTaxDeductions}
+                                onChange={(e) => setPreTaxDeductions(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                step="0.01"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 mb-2 font-medium dark:text-gray-200">Annual Post-Tax Deductions ($)</label>
+                            <input
+                                type="number"
+                                value={postTaxDeductions}
+                                onChange={(e) => setPostTaxDeductions(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                step="0.01"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        onClick={calculateYTD}
+                        className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 dark:bg-indigo-500"
+                    >
+                        Calculate YTD
+                    </button>
+                    {result && (
+                        <div className="mt-4 p-4 bg-gray-100 rounded-lg dark:bg-gray-700">
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Number of Pay Periods:</strong> {result.numPeriods}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Pay Per Period:</strong> ${result.payPerPeriod}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Annualized Gross Income:</strong> ${result.annualizedGrossIncome}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Estimated Annual Tax:</strong> ${result.estimatedAnnualTax}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Net Annualized Income (after tax):</strong> ${result.netAfterTax}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Net Annualized Income (after deductions):</strong> ${result.netAfterDeductions}</p>
+                            <p className="text-gray-700 dark:text-gray-200"><strong>Monthly Net Income:</strong> ${result.monthlyNet}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            const [searchTerm, setSearchTerm] = React.useState('');
+            const [currentTab, setCurrentTab] = React.useState('lenders');
+            const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem('darkMode') === 'true');
+            const [lenderData, setLenderData] = React.useState(() => {
+                let savedData;
+                try {
+                    const data = localStorage.getItem('lenderData');
+                    savedData = data ? JSON.parse(data) : null;
+                    if (savedData) {
+                        savedData = savedData.map(lender => ({
+                            ...lender,
+                            notes: lender.notes || []
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Error parsing lenderData from localStorage', e);
+                    savedData = null;
+                }
+                return savedData || [
+                    { name: "ACL", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Affordable Car Loans", score: "Negative Score", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "AFS", score: "NO SCORING", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Alex Bank", score: "COMP SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "AMMF", score: "1.1 SCORING", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Angle Finance", score: "1.1 SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "APFC", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Aussie Credit", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Autopay", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Azora", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Azora Commercial", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Azora Consumer", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "BOQ", score: "", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Branded", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Carstart", score: "", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Finance One", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Finstro", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "First Mac", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "First Max", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Flexi Commercial", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Gedda Money", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Greenlight", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Latitude", score: "", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Latitude PL", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Liberty", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Macquarie", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Metro", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Metro Commercial", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Metro Consumer", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Metro Finance", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Money3", score: "", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "MoneyMe", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Money Place", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Morris", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Newstart", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Now Finance", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Pepper", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Pepper Money", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Plenti Finance", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Prospa", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "RACV", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "RACV Finance", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Rapid", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Rapid Loans", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Resimac", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Scotpac", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "SocietyOne", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "Westlawn", score: "", seesRHI: "No", eot: "", acceptableVisas: "", notes: [] },
+                    { name: "WISR", score: "ONE SCORE", seesRHI: "Yes", eot: "", acceptableVisas: "", notes: [] }
+                ];
+            });
+            const [editingLender, setEditingLender] = React.useState(null);
+            const [noteModalState, setNoteModalState] = React.useState(null);
+            const [sortColumn, setSortColumn] = React.useState('name');
+            const [sortDirection, setSortDirection] = React.useState('asc');
+
+            React.useEffect(() => {
+                localStorage.setItem('lenderData', JSON.stringify(lenderData));
+                localStorage.setItem('darkMode', darkMode);
+            }, [lenderData, darkMode]);
+
+            const highlightText = (text, term) => {
+                if (!term.trim()) return text;
+                const regex = new RegExp(`(${term})`, 'gi');
+                return text.replace(regex, '<span class="highlight">$1</span>');
+            };
+
+            const handleEditLender = (lender) => setEditingLender(lender);
+
+            const handleSaveLender = (updatedLender) => {
+                if (editingLender) {
+                    setLenderData(prev => prev.map(l => l.name === editingLender.name ? { ...l, ...updatedLender } : l));
+                } else {
+                    if (lenderData.find(l => l.name === updatedLender.name)) { alert('Lender already exists.'); return; }
+                    setLenderData(prev => [...prev, { ...updatedLender, notes: [] }].sort((a, b) => a.name.localeCompare(b.name)));
+                }
+                setEditingLender(null);
+            };
+
+            const handleDeleteLender = (lender) => {
+                if (window.confirm(`Delete ${lender.name}?`)) {
+                    setLenderData(prev => prev.filter(l => l.name !== lender.name));
+                }
+            };
+
+            const handleAddNote = (lender) => setNoteModalState({ lender, noteIndex: null });
+
+            const handleEditNote = (lender, noteIndex) => setNoteModalState({ lender, noteIndex });
+
+            const handleDeleteNote = (lender, noteIndex) => {
+                if (window.confirm('Delete this note?')) {
+                    setLenderData(prev => prev.map(l => l.name === lender.name ? { ...l, notes: l.notes.filter((_, i) => i !== noteIndex) } : l));
+                }
+            };
+
+            const handleSaveNote = (updatedNotes) => {
+                setLenderData(prev => prev.map(l => l.name === noteModalState.lender.name ? { ...l, notes: updatedNotes } : l));
+                setNoteModalState(null);
+            };
+
+            const exportToCSV = () => {
+                const headers = ['Name', 'Score', 'Sees RHI', 'EOT', 'Acceptable Visas', 'Notes'];
+                const rows = lenderData.map(l => [l.name, l.score || '', l.seesRHI, l.eot || '', l.acceptableVisas || '', l.notes.map(n => n.text).join('; ')]);
+                const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'lender_data.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const filteredLenders = lenderData.filter(l =>
+                l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (l.score || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                l.seesRHI.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (l.eot || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (l.acceptableVisas || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                l.notes.some(n => n.text.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+
+            const sortedLenders = [...filteredLenders].sort((a, b) => {
+                const aValue = a[sortColumn] || '';
+                const bValue = b[sortColumn] || '';
+                return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+            });
+
+            const visaData = {
+                permanentVisas: [
+                    { name: "Skilled Independent Visa (Subclass 189)", workRights: "Unrestricted", details: "For skilled workers not sponsored by an employer, family, or state/territory." },
+                    { name: "Skilled Nominated Visa (Subclass 190)", workRights: "Unrestricted", details: "For skilled workers nominated by a state or territory government." },
+                ],
+            };
+
+            const filteredPermanentVisas = visaData.permanentVisas.filter(v =>
+                v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                v.workRights.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                v.details.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            return (
+                <div className={`max-w-7xl mx-auto p-8 ${darkMode ? 'dark' : ''}`}>
+                    <div className="container dark:bg-gray-800 dark:text-gray-200">
+                        <header className="flex justify-between items-center mb-8">
+                            <h1 className="text-4xl font-bold text-indigo-700 dark:text-indigo-300">JoshuaTREE Broker Wiki</h1>
+                            <button onClick={() => setDarkMode(!darkMode)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Toggle Dark Mode</button>
+                        </header>
+                        <div className="flex space-x-4 mb-8">
+                            <button onClick={() => setCurrentTab('lenders')} className={`px-4 py-2 rounded-lg ${currentTab === 'lenders' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'} dark:bg-gray-700 dark:text-gray-200`}>Lenders</button>
+                            <button onClick={() => setCurrentTab('ytd')} className={`px-4 py-2 rounded-lg ${currentTab === 'ytd' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'} dark:bg-gray-700 dark:text-gray-200`}>YTD Calculator</button>
+                            <button onClick={() => setCurrentTab('visas')} className={`px-4 py-2 rounded-lg ${currentTab === 'visas' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'} dark:bg-gray-700 dark:text-gray-200`}>Visa Information</button>
+                        </div>
+                        <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-4 border rounded-lg mb-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                        {currentTab === 'lenders' && (
+                            <section className="mb-12">
+                                <CollapsibleSection title="Lender Quick Reference">
+                                    <button onClick={() => setEditingLender({})} className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-500">Add New Lender</button>
+                                    <button onClick={exportToCSV} className="mb-4 ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-500">Export to CSV</button>
+                                    <div className="overflow-x-auto">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th onClick={() => setSortDirection(d => d === 'asc' ? 'desc' : 'asc')} className="cursor-pointer">Name {sortDirection === 'asc' ? '↑' : '↓'}</th>
+                                                    <th>Score</th>
+                                                    <th>Sees RHI</th>
+                                                    <th>EOT</th>
+                                                    <th>Acceptable Visas</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {sortedLenders.map((lender, index) => (
+                                                    <tr key={index} className="hover:bg-gray-100 dark:hover:bg-gray-600">
+                                                        <td dangerouslySetInnerHTML={{ __html: highlightText(lender.name, searchTerm) }}></td>
+                                                        <td dangerouslySetInnerHTML={{ __html: highlightText(lender.score || "N/A", searchTerm) }}></td>
+                                                        <td dangerouslySetInnerHTML={{ __html: highlightText(lender.seesRHI, searchTerm) }}></td>
+                                                        <td dangerouslySetInnerHTML={{ __html: highlightText(lender.eot || "N/A", searchTerm) }}></td>
+                                                        <td className="break-words" dangerouslySetInnerHTML={{ __html: highlightText(lender.acceptableVisas || "N/A", searchTerm) }}></td>
+                                                        <td>
+                                                            <div className="flex justify-center space-x-1">
+                                                                <button onClick={() => handleEditLender(lender)} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-500">Edit</button>
+                                                                <button onClick={() => handleAddNote(lender)} className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-500">Add Note</button>
+                                                                <button onClick={() => handleDeleteLender(lender)} className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-500">Delete</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </CollapsibleSection>
+                                <CollapsibleSection title="Lender Details">
+                                    {filteredLenders.map(lender => (
+                                        <CollapsibleSection key={lender.name} title={lender.name}>
+                                            <p><strong>Score:</strong> {lender.score || "N/A"}</p>
+                                            <p><strong>Sees RHI:</strong> {lender.seesRHI}</p>
+                                            <p><strong>EOT:</strong> {lender.eot || "N/A"}</p>
+                                            <p><strong>Acceptable Visas:</strong> {lender.acceptableVisas || "N/A"}</p>
+                                            <h4 className="mt-4 mb-2 text-lg font-medium text-indigo-700 dark:text-indigo-300">Notes</h4>
+                                            {lender.notes.length > 0 ? (
+                                                <ul className="space-y-2">
+                                                    {lender.notes.map((note, index) => (
+                                                        <li key={index} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-700">
+                                                            <p>{note.text}</p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400">{note.timestamp}</p>
+                                                            <div className="flex space-x-2 mt-2">
+                                                                <button onClick={() => handleEditNote(lender, index)} className="text-blue-500 hover:underline">Edit</button>
+                                                                <button onClick={() => handleDeleteNote(lender, index)} className="text-red-500 hover:underline">Delete</button>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-300">No notes available.</p>
+                                            )}
+                                        </CollapsibleSection>
+                                    ))}
+                                </CollapsibleSection>
+                            </section>
+                        )}
+                        {currentTab === 'ytd' && (
+                            <section className="mb-12">
+                                <CollapsibleSection title="Year-to-Date Income Calculator">
+                                    <YTDCalculator />
+                                </CollapsibleSection>
+                            </section>
+                        )}
+                        {currentTab === 'visas' && (
+                            <section className="mb-12">
+                                <CollapsibleSection title="Permanent Visas">
+                                    {filteredPermanentVisas.length > 0 ? (
+                                        <ul className="space-y-4">
+                                            {filteredPermanentVisas.map((visa, index) => (
+                                                <li key={index} className="p-4 bg-gray-50 rounded-lg shadow-sm dark:bg-gray-700">
+                                                    <h4 className="text-lg font-medium text-indigo-700 dark:text-indigo-300">{visa.name}</h4>
+                                                    <p className="text-gray-600 dark:text-gray-200"><strong>Work Rights:</strong> {visa.workRights}</p>
+                                                    <p className="text-gray-600 dark:text-gray-200"><strong>Details:</strong> {visa.details}</p>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-gray-600 dark:text-gray-300">No visas found.</p>
+                                    )}
+                                </CollapsibleSection>
+                            </section>
+                        )}
+                        <footer className="text-center text-gray-500 text-sm mt-12 dark:text-gray-400">
+                            <p>© 2025 JoshuaTREE. All rights reserved.</p>
+                        </footer>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
